@@ -13,18 +13,6 @@ provider "aws" {
 
 
 
-# Attach the AWS managed policy for ECR read-only access
-resource "aws_iam_role_policy_attachment" "ec2_ecr_policy_attachment" {
-  role       = aws_iam_role.ec2_ecr_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-
-# Create an instance profile to attach the role to the EC2 instance
-resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "ec2-ecr-instance-profile"
-  role = aws_iam_role.ec2_ecr_role.name
-}
-
 # Security Group to allow inbound traffic
 resource "aws_security_group" "strapi_sg" {
   name        = "strapi-sg"
