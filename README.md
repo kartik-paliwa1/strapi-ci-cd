@@ -1,7 +1,10 @@
 # Strapi-ci-cd
 
-## Project Structure
-'''bash
+
+
+Project Structure
+```bash
+
 .
 ├── .github/workflows/
 │   ├── ci.yml          # Workflow to build and push the Docker image to ECR.
@@ -13,67 +16,120 @@
 ├── src/                # Strapi source code.
 ├── Dockerfile          # Instructions to build the Strapi application into a Docker image.
 └── .dockerignore       # Specifies files to exclude from the Docker image.
-'''
 
-How It Works
-This project is built around two distinct GitHub Actions workflows.
+```
 
-CI Pipeline (ci.yml)
-This workflow is focused on Continuous Integration. It builds and packages the application.
+## How It Works
+The automation is split into two distinct workflows:
 
-Trigger: Automatically runs on every push to the main branch.
+### 1. CI Pipeline (Build & Push Image)
+This workflow runs automatically whenever code is pushed to the main branch.
 
-Steps:
+Code Push: A developer pushes new commits to the main branch.
 
-Checks out the source code.
+Trigger Action: The ci.yml GitHub Action is triggered.
 
-Logs into your AWS ECR account using the configured secrets.
+Build Image: The action builds a Docker image of the Strapi application.
 
-Builds a Docker image of the Strapi application.
+Push to Registry: The new image is tagged with the commit SHA and pushed to a private AWS Elastic Container Registry (ECR).
 
-Tags the image with the unique Git commit SHA.
+### 2. CD Pipeline (Deploy to EC2)
+This workflow must be triggered manually from the GitHub Actions tab.
 
-Pushes the tagged image to your private ECR repository.
+Manual Trigger: A user navigates to the "Actions" tab and runs the "CD - Terraform Deployment" workflow.
 
-CD Pipeline (terraform.yml)
-This workflow is focused on Continuous Deployment. It provisions the infrastructure and deploys the application.
+Provide Image URI: The user provides the full URI of the Docker image from the CI pipeline (e.g., 123456789012.dkr.ecr.us-east-1.amazonaws.com/strapi-deployment:commit-sha).
 
-Trigger: This workflow is manually triggered from the "Actions" tab in GitHub.
+Run Terraform: The terraform.yml action runs terraform apply.
 
-Input: It requires you to provide the full ECR Image URI of the container you wish to deploy.
+Create Infrastructure: Terraform creates an EC2 instance and an associated IAM role that allows it to pull images from ECR.
 
-Steps:
+Start Application: The EC2 instance pulls the specified Docker image from ECR and runs the Strapi container.
 
-Checks out the source code.
+Getting Started
+Follow these steps to set up the project and the required cloud infrastructure.
 
-Sets up the Terraform CLI.
+Prerequisites
+An AWS Account with access to create IAM, EC2, and ECR resources.
 
-Initializes, plans, and applies the Terraform configuration.
+A GitHub Account.
 
-Terraform provisions an EC2 instance, which pulls the specified Docker image from ECR and runs it as a container.
+Node.js (v18+) installed locally.
 
-Deployment Process
-To deploy an update to your application, follow these steps:
+Terraform CLI installed locally.
 
-Push a Code Change: Make your desired changes to the Strapi application and push the commit to the main branch.
+Configuration Steps
+Clone the Repository
 
 Bash
 
+git clone https://github.com/your-username/strapi-ci-cd.git
+cd strapi-ci-cd
+Create AWS ECR Repository
+
+Log in to your AWS Console.
+
+Navigate to the Elastic Container Registry (ECR) service.
+
+Create a new private repository. For this project, the recommended name is strapi-deployment.
+
+Create an AWS IAM User
+
+In the AWS IAM service, create a new user with programmatic access.
+
+Attach the AmazonEC2ContainerRegistryPowerUser policy to this user. This provides the necessary permissions for GitHub Actions to push images to ECR.
+
+Save the generated Access Key ID and Secret Access Key.
+
+Set Up GitHub Secrets
+
+In your GitHub repository, navigate to Settings > Secrets and variables > Actions.
+
+Create the following repository secrets:
+
+Secret Name	Description
+AWS_ACCESS_KEY_ID	The Access Key ID from the IAM user you created.
+AWS_SECRET_ACCESS_KEY	The Secret Access Key from the IAM user.
+AWS_REGION	The AWS region of your ECR repository (e.g., us-east-1).
+ECR_REPOSITORY	The name of your ECR repository (e.g., strapi-deployment).
+Review Terraform Configuration
+
+Open the terraform/main.tf file.
+
+If you are using a region other than us-east-1, you may need to update the ami value to a valid Ubuntu 20.04 AMI for your chosen region.
+
+Deployment Flow
+Here is the day-to-day process for deploying a change.
+
+Develop Locally: Make your desired changes to the Strapi application.
+
+Push to Main: Commit your changes and push them to the main branch.
+
+Bash
+
+git add .
+git commit -m "Your feature or fix description"
 git push origin main
-Wait for the CI Pipeline: Go to the Actions tab in your GitHub repository and wait for the "CI - Build and Push to ECR" workflow to complete successfully.
+Monitor CI Action: Go to the Actions tab in your GitHub repository. Wait for the "CI - Build and Push to ECR" workflow to complete successfully.
 
-Copy the Image URI: In the completed CI workflow logs, find and copy the full Docker image URI. It will look like this:
-123456789012.dkr.ecr.us-east-1.amazonaws.com/strapi-deployment:a1b2c3d4e5f6...
+Copy Image URI: In the completed CI workflow log, find and copy the full Docker image URI. It will look like this: 123456789012.dkr.ecr.us-east-1.amazonaws.com/strapi-deployment:76351dae...
 
-Trigger the CD Pipeline:
+Trigger Deployment:
 
-Navigate to the "CD - Terraform Deployment" workflow in the Actions tab.
+Navigate to the Actions tab.
+
+Select the "CD - Terraform Deployment" workflow from the list.
 
 Click the "Run workflow" dropdown.
 
-Paste the copied Image URI into the input field.
+Paste the full image URI into the image_uri input field.
 
 Click the green "Run workflow" button.
 
-Verify Deployment: Once the Terraform workflow is complete, check its logs. The public IP address of the EC2 instance will be listed in the "Terraform Apply" step's output. You can access your Strapi application at http://<your-public-ip>:1337.
+Verify Deployment:
 
+Wait for the Terraform action to complete.
+
+In the job logs for the apply step, find the public_ip output value.
+
+Open your web browser and navigate to http://<your-public-ip>:1337 to see your running Strapi application.
