@@ -11,20 +11,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-# IAM Role for EC2 to allow pulling images from ECR
-resource "aws_iam_role" "ec2_ecr_role" {
-  name = "ec2-ecr-role"
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [{
-      Action = "sts:AssumeRole",
-      Effect = "Allow",
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-  })
-}
+
 
 # Attach the AWS managed policy for ECR read-only access
 resource "aws_iam_role_policy_attachment" "ec2_ecr_policy_attachment" {
@@ -67,21 +54,34 @@ resource "aws_security_group" "strapi_sg" {
 
 # The EC2 instance itself
 resource "aws_instance" "strapi_server" {
-  ami                    = "ami-0c55b159cbfafe1f0" # Ubuntu 20.04 LTS in us-east-1. Change if your region is different.
-  instance_type          = "t2.micro"             # Free tier eligible
-  security_groups        = [aws_security_group.strapi_sg.name]
-  iam_instance_profile   = aws_iam_instance_profile.ec2_profile.name
+  ami             = "ami-0c55b159cbfafe1f0" # Ubuntu 20.04 LTS in us-east-1. Change if your region is different.
+  instance_type   = "t2.micro"             # Free tier eligible
+  security_groups = [aws_security_group.strapi_sg.name]
 
-  # This script runs on instance startup
+  # This new script runs on instance startup
   user_data = <<-EOF
               #!/bin/bash
+              # Update packages and install Docker
               sudo apt-get update
-              sudo apt-get install -y docker.io
+              sudo apt-get install -y docker.io awscli
+
+              # Start and enable Docker
               sudo systemctl start docker
               sudo systemctl enable docker
-              sudo usermod -aG docker ubuntu
+              sudo usmod -aG docker ubuntu
 
-              # The instance role handles ECR authentication, so we just need to pull and run
+              # Configure AWS CLI with credentials passed from Terraform
+              mkdir -p /home/ubuntu/.aws
+              echo "[default]" > /home/ubuntu/.aws/credentials
+              echo "aws_access_key_id = ${var.aws_access_key_id}" >> /home/ubuntu/.aws/credentials
+              echo "aws_secret_access_key = ${var.aws_secret_access_key}" >> /home/ubuntu/.aws/credentials
+              chown -R ubuntu:ubuntu /home/ubuntu/.aws
+
+              # Log in to AWS ECR
+              ECR_REGISTRY=$(echo "${var.docker_image_uri}" | cut -d'/' -f1)
+              sudo -u ubuntu aws ecr get-login-password --region ${var.aws_region} | sudo docker login --username AWS --password-stdin $ECR_REGISTRY
+              
+              # Pull and run the Strapi container
               sudo docker run -d -p 1337:1337 --restart unless-stopped --name strapi ${var.docker_image_uri}
               EOF
 
