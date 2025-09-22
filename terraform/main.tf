@@ -30,7 +30,7 @@ data "aws_ami" "ubuntu" {
 
 # Security Group to allow inbound traffic
 resource "aws_security_group" "strapi_sg" {
-  name        = "strapi-sg-final"
+  name        = "strapi-sg-deploy-final"
   description = "Allow SSH and Strapi app traffic"
 
   ingress {
