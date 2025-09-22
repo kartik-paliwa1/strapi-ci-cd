@@ -42,7 +42,7 @@ resource "aws_security_group" "strapi_sg" {
 
 # The EC2 instance itself
 resource "aws_instance" "strapi_server" {
-  ami             = "ami-0c55b159cbfafe1f0" # Ubuntu 20.04 LTS in us-east-1. Change if your region is different.
+  ami             = "ami-0945e0a53f5b6084c " # Ubuntu 20.04 LTS in us-east-1. Change if your region is different.
   instance_type   = "t2.micro"             # Free tier eligible
   security_groups = [aws_security_group.strapi_sg.name]
 
