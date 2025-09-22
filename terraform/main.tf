@@ -15,7 +15,7 @@ provider "aws" {
 
 # Security Group to allow inbound traffic
 resource "aws_security_group" "strapi_sg" {
-  name        = "strapi-kartik-paliwal"
+  name        = "strapi-sg-final"
   description = "Allow SSH and Strapi app traffic"
 
   ingress {
