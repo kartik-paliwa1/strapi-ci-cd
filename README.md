@@ -1,5 +1,7 @@
 # Strapi-ci-cd
-Project Structure
+
+## Project Structure
+'''bash
 .
 ├── .github/workflows/
 │   ├── ci.yml          # Workflow to build and push the Docker image to ECR.
@@ -11,7 +13,7 @@ Project Structure
 ├── src/                # Strapi source code.
 ├── Dockerfile          # Instructions to build the Strapi application into a Docker image.
 └── .dockerignore       # Specifies files to exclude from the Docker image.
-
+'''
 
 How It Works
 This project is built around two distinct GitHub Actions workflows.
