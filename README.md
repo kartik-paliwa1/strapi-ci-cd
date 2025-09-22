@@ -46,26 +46,27 @@ Create Infrastructure: Terraform creates an EC2 instance and an associated IAM r
 
 Start Application: The EC2 instance pulls the specified Docker image from ECR and runs the Strapi container.
 
-Getting Started
+## Getting Started
 Follow these steps to set up the project and the required cloud infrastructure.
 
-Prerequisites
-An AWS Account with access to create IAM, EC2, and ECR resources.
+### Prerequisites
+- An AWS Account with access to create IAM, EC2, and ECR resources.
 
-A GitHub Account.
+- A GitHub Account.
 
-Node.js (v18+) installed locally.
+- Node.js (v18+) installed locally.
 
-Terraform CLI installed locally.
+- Terraform CLI installed locally.
 
-Configuration Steps
-Clone the Repository
+#### Configuration Steps
+#### 1.Clone the Repository
 
-Bash
+```bash
 
 git clone https://github.com/your-username/strapi-ci-cd.git
 cd strapi-ci-cd
-Create AWS ECR Repository
+```
+#### 2.Create AWS ECR Repository
 
 Log in to your AWS Console.
 
@@ -73,7 +74,7 @@ Navigate to the Elastic Container Registry (ECR) service.
 
 Create a new private repository. For this project, the recommended name is strapi-deployment.
 
-Create an AWS IAM User
+#### 3. Create an AWS IAM User
 
 In the AWS IAM service, create a new user with programmatic access.
 
@@ -81,7 +82,7 @@ Attach the AmazonEC2ContainerRegistryPowerUser policy to this user. This provide
 
 Save the generated Access Key ID and Secret Access Key.
 
-Set Up GitHub Secrets
+#### 4.Set Up GitHub Secrets
 
 In your GitHub repository, navigate to Settings > Secrets and variables > Actions.
 
@@ -92,29 +93,29 @@ AWS_ACCESS_KEY_ID	The Access Key ID from the IAM user you created.
 AWS_SECRET_ACCESS_KEY	The Secret Access Key from the IAM user.
 AWS_REGION	The AWS region of your ECR repository (e.g., us-east-1).
 ECR_REPOSITORY	The name of your ECR repository (e.g., strapi-deployment).
-Review Terraform Configuration
+#### 5.Review Terraform Configuration
 
 Open the terraform/main.tf file.
 
 If you are using a region other than us-east-1, you may need to update the ami value to a valid Ubuntu 20.04 AMI for your chosen region.
 
-Deployment Flow
-Here is the day-to-day process for deploying a change.
+## Deployment Flow
 
-Develop Locally: Make your desired changes to the Strapi application.
+- Develop Locally: Make your desired changes to the Strapi application.
 
-Push to Main: Commit your changes and push them to the main branch.
+- Push to Main: Commit your changes and push them to the main branch.
 
-Bash
+```bash
 
 git add .
 git commit -m "Your feature or fix description"
 git push origin main
-Monitor CI Action: Go to the Actions tab in your GitHub repository. Wait for the "CI - Build and Push to ECR" workflow to complete successfully.
+```
+- Monitor CI Action: Go to the Actions tab in your GitHub repository. Wait for the "CI - Build and Push to ECR" workflow to complete successfully.
 
-Copy Image URI: In the completed CI workflow log, find and copy the full Docker image URI. It will look like this: 123456789012.dkr.ecr.us-east-1.amazonaws.com/strapi-deployment:76351dae...
+- Copy Image URI: In the completed CI workflow log, find and copy the full Docker image URI. It will look like this: 123456789012.dkr.ecr.us-east-1.amazonaws.com/strapi-deployment:76351dae...
 
-Trigger Deployment:
+- Trigger Deployment:
 
 Navigate to the Actions tab.
 
@@ -126,7 +127,7 @@ Paste the full image URI into the image_uri input field.
 
 Click the green "Run workflow" button.
 
-Verify Deployment:
+- Verify Deployment:
 
 Wait for the Terraform action to complete.
 
