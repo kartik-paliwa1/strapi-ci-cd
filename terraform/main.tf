@@ -11,7 +11,22 @@ provider "aws" {
   region = var.aws_region
 }
 
+# ADD THIS DATA BLOCK to find the correct AMI for your region
+data "aws_ami" "ubuntu" {
+  most_recent = true
 
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] # Canonical's AWS account ID
+}
 
 # Security Group to allow inbound traffic
 resource "aws_security_group" "strapi_sg" {
@@ -42,7 +57,7 @@ resource "aws_security_group" "strapi_sg" {
 
 # The EC2 instance itself
 resource "aws_instance" "strapi_server" {
-  ami             = "ami-0945e0a53f5b6084c " # Ubuntu 20.04 LTS in us-east-1. Change if your region is different.
+  ami             = data.aws_ami.ubuntu.id # UPDATED THIS LINE to use the AMI found above
   instance_type   = "t2.micro"             # Free tier eligible
   security_groups = [aws_security_group.strapi_sg.name]
 
@@ -56,7 +71,7 @@ resource "aws_instance" "strapi_server" {
               # Start and enable Docker
               sudo systemctl start docker
               sudo systemctl enable docker
-              sudo usmod -aG docker ubuntu
+              sudo usermod -aG docker ubuntu
 
               # Configure AWS CLI with credentials passed from Terraform
               mkdir -p /home/ubuntu/.aws
